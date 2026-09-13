@@ -1,0 +1,208 @@
+:root {
+  --theme-plum: #42245f;
+  --theme-violet: #6851c7;
+  --theme-lavender: #f0eaff;
+  --theme-teal: #267f88;
+  --theme-mint: #d9f5f0;
+  --theme-gold: #f6b73c;
+  --theme-coral: #e97968;
+  --theme-ink: #29213a;
+  --theme-muted: #71677f;
+  --theme-line: #ddd2ef;
+  --theme-white: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  --theme-ink: #f5efff;
+  --theme-muted: #c9bed9;
+  --theme-line: #54446b;
+  --theme-white: #241b32;
+}
+
+body {
+  color: var(--theme-ink) !important;
+  background: linear-gradient(135deg, #e6dcff 0%, #fffaff 48%, #d9f5f0 100%) !important;
+}
+
+:root[data-theme="dark"] body {
+  background: linear-gradient(135deg, #171124 0%, #241b32 52%, #12383b 100%) !important;
+}
+
+:root[data-theme="dark"] .section-card,
+:root[data-theme="dark"] main,
+:root[data-theme="dark"] .portal,
+:root[data-theme="dark"] .login-box {
+  color: var(--theme-ink) !important;
+}
+
+.theme-toggle {
+  padding: 9px 13px;
+  color: var(--theme-plum);
+  background: var(--theme-gold);
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  font: 0.85rem Arial, sans-serif;
+}
+
+.profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 520px) {
+  .profile-actions { width: 100%; }
+  .theme-toggle, .logout { flex: 1; }
+}
+
+header,
+.topbar {
+  color: var(--theme-white) !important;
+  background: linear-gradient(120deg, var(--theme-plum), var(--theme-violet), var(--theme-teal)) !important;
+}
+
+main,
+.portal,
+.login-box {
+  border-color: rgba(66, 36, 95, 0.12) !important;
+  box-shadow: 0 20px 50px rgba(66, 36, 95, 0.16) !important;
+}
+
+main,
+.portal,
+.login-box,
+.section-card,
+.class-card,
+.notice-card,
+.detail,
+.stat,
+.profile-item,
+.result,
+.scan-summary {
+  background: var(--theme-white) !important;
+}
+
+.section-grid .section-card {
+  min-height: 150px;
+  color: var(--theme-white) !important;
+  border: 0 !important;
+  box-shadow: 0 14px 28px rgba(66, 36, 95, 0.16) !important;
+  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+
+.section-grid .section-card:nth-child(1) { background: linear-gradient(135deg, #6851c7, #8b6de0) !important; }
+.section-grid .section-card:nth-child(2) { background: linear-gradient(135deg, #267f88, #45b4aa) !important; }
+.section-grid .section-card:nth-child(3) { background: linear-gradient(135deg, #e97968, #f4a261) !important; }
+.section-grid .section-card:nth-child(4) { background: linear-gradient(135deg, #d28a2e, #f6b73c) !important; }
+.section-grid .section-card:nth-child(5) { background: linear-gradient(135deg, #a64ca6, #d76dc8) !important; }
+.section-grid .section-card:nth-child(6) { background: linear-gradient(135deg, #3478c4, #5ca9e6) !important; }
+
+.section-grid .section-card:hover,
+.section-grid .section-card:focus-visible {
+  border-color: transparent !important;
+  box-shadow: 0 20px 34px rgba(66, 36, 95, 0.25) !important;
+  filter: saturate(1.15);
+  outline: none;
+  transform: translateY(-5px);
+}
+
+.section-grid .section-card strong,
+.section-grid .section-card span {
+  color: var(--theme-white) !important;
+}
+
+.section-grid .section-card strong {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.section-grid .section-card span {
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3,
+.section-card strong,
+.class-card h2,
+.notice-card h2,
+.notice-card h3 {
+  color: var(--theme-plum) !important;
+}
+
+p,
+.intro,
+.intro-text,
+.subtitle,
+.welcome p,
+.profile,
+.note-meta,
+.hint,
+.empty {
+  color: var(--theme-muted) !important;
+}
+
+button,
+button:hover,
+.view-link {
+  color: var(--theme-white) !important;
+  background: linear-gradient(135deg, var(--theme-violet), var(--theme-teal)) !important;
+}
+
+.logout {
+  color: var(--theme-plum) !important;
+  background: var(--theme-gold) !important;
+}
+
+input,
+select,
+textarea {
+  border-color: var(--theme-line) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--theme-violet) !important;
+  outline-color: rgba(104, 81, 199, 0.2) !important;
+}
+
+a,
+.back,
+.profile-link {
+  color: var(--theme-violet) !important;
+}
+
+.brand {
+  color: var(--theme-gold) !important;
+}
+
+.status.success,
+.generated-password {
+  color: #155e35 !important;
+  background: #dcfce7 !important;
+}
+
+.status.error {
+  color: #9a3412 !important;
+  background: #ffedd5 !important;
+}
+
+.attended,
+.joined {
+  color: #155e35 !important;
+  background: #dcfce7 !important;
+}
+
+.missed {
+  color: #9a3412 !important;
+  background: #ffedd5 !important;
+}
+
+/* Keep dashboard card text readable over the colorful backgrounds. */
+.section-grid .section-card strong,
+.section-grid .section-card span {
+  color: #ffffff !important;
+}

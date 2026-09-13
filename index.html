@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head><link rel="stylesheet" href="theme.css">
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>School Portal</title>
+	<title>Vidyalaya Portal</title>
 	<style>
 		:root {
-			--navy: #14213d;
-			--blue: #2563eb;
-			--sky: #e8f1ff;
-			--gold: #f4b942;
-			--ink: #182230;
-			--muted: #64748b;
+			--navy: #42245f;
+			--blue: #6851c7;
+			--sky: #f0eaff;
+			--gold: #f6b73c;
+			--ink: #29213a;
+			--muted: #71677f;
 			--white: #ffffff;
 		}
 
@@ -28,7 +28,7 @@
 			padding: 24px;
 			color: var(--ink);
 			font-family: Georgia, "Times New Roman", serif;
-			background: linear-gradient(135deg, #dcecff 0%, #f8fbff 55%, #fff3d6 100%);
+			background: linear-gradient(135deg, #e6dcff 0%, #fffaff 48%, #d9f5f0 100%);
 		}
 
 		.portal {
@@ -37,9 +37,9 @@
 			display: grid;
 			grid-template-columns: 0.9fr 1.1fr;
 			background: var(--white);
-			border: 1px solid rgba(20, 33, 61, 0.1);
+			border: 1px solid rgba(66, 36, 95, 0.12);
 			border-radius: 18px;
-			box-shadow: 0 24px 60px rgba(20, 33, 61, 0.16);
+			box-shadow: 0 24px 60px rgba(66, 36, 95, 0.18);
 		}
 
 		.intro {
@@ -50,7 +50,7 @@
 			min-height: 520px;
 			padding: 48px;
 			color: var(--white);
-			background: var(--navy);
+			background: linear-gradient(150deg, #42245f 0%, #6748a2 72%, #267f88 140%);
 		}
 
 		.intro::after {
@@ -60,7 +60,7 @@
 			bottom: -100px;
 			width: 260px;
 			height: 260px;
-			border: 36px solid rgba(244, 185, 66, 0.9);
+			border: 36px solid rgba(246, 183, 60, 0.92);
 			border-radius: 50%;
 		}
 
@@ -87,7 +87,7 @@
 			position: relative;
 			z-index: 1;
 			max-width: 280px;
-			color: #cbd5e1;
+			color: #eadff8;
 			font-family: Arial, sans-serif;
 			font-size: 0.95rem;
 			line-height: 1.6;
@@ -125,7 +125,7 @@
 			padding: 21px 22px;
 			color: var(--navy);
 			text-decoration: none;
-			border: 1px solid #d8e2f0;
+			border: 1px solid #ddd2ef;
 			border-radius: 10px;
 			transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 		}
@@ -133,7 +133,7 @@
 		.login-option:hover,
 		.login-option:focus-visible {
 			border-color: var(--blue);
-			box-shadow: 0 10px 24px rgba(37, 99, 235, 0.14);
+			box-shadow: 0 10px 24px rgba(104, 81, 199, 0.18);
 			outline: none;
 			transform: translateY(-3px);
 		}
@@ -179,9 +179,9 @@
 <body>
 	<main class="portal">
 		<section class="intro" aria-labelledby="welcome-heading">
-			<p class="brand">School Portal</p>
+			<p class="brand">Vidyalaya Portal</p>
 			<h1 id="welcome-heading">Welcome back.</h1>
-			<p class="intro-text">Choose your account type to continue to the school portal.</p>
+			<p class="intro-text">Choose your account type to continue to the vidyalaya portal.</p>
 		</section>
 
 		<section class="choices" aria-labelledby="login-heading">
@@ -208,4 +208,14 @@
 		</section>
 	</main>
 </body>
+<script type="module">
+	import { auth } from './firebase-config.js';
+	import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+	onAuthStateChanged(auth, user => {
+		if (!user) return;
+		const student = JSON.parse(localStorage.getItem('studentAccount') || 'null');
+		const teacher = JSON.parse(localStorage.getItem('teacherAccount') || 'null');
+		window.location.href = student ? 'student-dash.html' : teacher ? 'teacher-dash.html' : 'student-login.html';
+	});
+</script>
 </html>

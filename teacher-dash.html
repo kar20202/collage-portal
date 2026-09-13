@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head><link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Dashboard</title>
@@ -31,8 +32,9 @@
 </head>
 <body>
   <header class="topbar">
-    <p class="brand">School Portal</p>
+    <p class="brand">Vidyalaya Portal</p>
     <div class="profile-actions">
+      <button class="theme-toggle" id="theme-toggle" type="button">Dark mode</button>
       <a class="profile-link" href="teacher-profile.html">Teacher Profile</a>
       <button class="logout" id="logout" type="button">Log out</button>
     </div>
@@ -61,4 +63,14 @@
     });
   </script>
 </body>
+<script type="module">
+  import { logoutAccount } from './firebase-data.js';
+  document.getElementById('logout').addEventListener('click', async event => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    await logoutAccount();
+    localStorage.removeItem('teacherAccount');
+    window.location.href = 'teacher-login.html';
+  }, true);
+</script>
 </html>

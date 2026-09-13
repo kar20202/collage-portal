@@ -1,4 +1,4 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { get, onValue, ref, runTransaction, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { getDownloadURL, ref as storageRef, uploadBytes } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 import { auth, database, storage } from "./firebase-config.js";
@@ -17,8 +17,20 @@ export async function loginAccount(email, password) {
   return { user: credential.user, profile: profileSnapshot.val() };
 }
 
+export async function logoutAccount() {
+  await signOut(auth);
+}
+
 export async function saveClass(classData) {
   await set(ref(database, `classes/${classData.id}`), classData);
+  await set(ref(database, `notifications/${classData.id}`), {
+    id: classData.id,
+    type: 'class',
+    title: 'New class uploaded',
+    message: `${classData.className} - ${classData.subject}`,
+    teacherName: classData.teacherName,
+    createdAt: new Date().toISOString()
+  });
 }
 
 export function watchClasses(callback) {
@@ -56,4 +68,8 @@ export async function saveNotice(notice) {
 
 export function watchNotices(callback) {
   return onValue(ref(database, 'notices'), snapshot => callback(snapshot.val() || {}));
+}
+
+export function watchNotifications(callback) {
+  return onValue(ref(database, 'notifications'), snapshot => callback(snapshot.val() || {}));
 }

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<head><link rel="stylesheet" href="theme.css">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Login | School Portal</title>
@@ -80,9 +80,12 @@
   </script>
   <script type="module">
     import { registerAccount, loginAccount } from './firebase-data.js';
+    import { auth } from './firebase-config.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
     const teacherLoginForm = document.getElementById('login-form');
     const teacherRegisterForm = document.getElementById('register-form');
     const teacherStatus = document.getElementById('generated-password');
+    onAuthStateChanged(auth, user => { if (user && localStorage.getItem('teacherAccount')) window.location.href = 'teacher-dash.html'; });
     teacherRegisterForm.addEventListener('submit', async event => {
       event.preventDefault();
       event.stopImmediatePropagation();
