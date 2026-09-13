@@ -43,66 +43,43 @@
     <p id="status" class="status" role="status"></p>
     <a class="back" href="teacher-dash.html">Back to dashboard</a>
   </main>
-  <script>
+  <script type="module">
+    import { saveNote } from './firebase-data.js';
     const teacherAccount = JSON.parse(localStorage.getItem('teacherAccount') || 'null');
     if (!teacherAccount) window.location.href = 'teacher-login.html';
     document.getElementById('teacher-name').textContent = teacherAccount?.fullName || '-';
     document.getElementById('subject').textContent = teacherAccount?.subject || '-';
-    const databaseRequest = indexedDB.open('schoolPortal', 1);
-    databaseRequest.onupgradeneeded = event => event.target.result.createObjectStore('notes', { keyPath: 'id' });
-    const databaseReady = new Promise((resolve, reject) => {
-      databaseRequest.onsuccess = event => resolve(event.target.result);
-      databaseRequest.onerror = () => reject(new Error('Browser storage could not be opened.'));
-    });
-    function saveNote(note) {
-      return databaseReady.then(database => new Promise((resolve, reject) => {
-        const request = database.transaction('notes', 'readwrite').objectStore('notes').put(note);
-        request.onsuccess = resolve;
-        request.onerror = () => reject(new Error('The note could not be saved. Try a smaller file.'));
-      }));
-    }
-    document.getElementById('notes-form').addEventListener('submit', async event => {
-      event.preventDefault();
-      const form = event.currentTarget;
-      const file = document.getElementById('note-file').files[0];
-      const status = document.getElementById('status');
-      if (!file) return;
-      try {
-        if (file.size > 100 * 1024 * 1024) throw new Error('The file must be 100 MB or smaller.');
-        await saveNote({ id: Date.now().toString(), fileName: file.name, fileType: file.type, file, teacherName: teacherAccount.fullName, teacherEmail: teacherAccount.email, subject: teacherAccount.subject, createdAt: new Date().toISOString() });
-        form.reset();
-        status.textContent = 'Notes published successfully. Students can view them from View Notes.';
-        status.style.display = 'block';
-        status.style.color = '#155e35';
-        status.style.background = '#dcfce7';
-      } catch (error) {
-        status.textContent = error.message;
-        status.style.display = 'block';
-        status.style.color = '#9a3412';
-        status.style.background = '#ffedd5';
-      }
-    });
-  </script>
-  <script type="module">
-    import { saveNote } from './firebase-data.js';
     document.getElementById('notes-form').addEventListener('submit', async event => {
       event.preventDefault();
       event.stopImmediatePropagation();
       const form = event.currentTarget;
       const file = document.getElementById('note-file').files[0];
       const status = document.getElementById('status');
+      const button = event.currentTarget.querySelector('button[type="submit"]');
       const account = JSON.parse(localStorage.getItem('teacherAccount') || 'null');
       if (!file) return;
       try {
         if (file.size > 100 * 1024 * 1024) throw new Error('The file must be 100 MB or smaller.');
+        button.disabled = true;
+        button.textContent = 'Uploading...';
         const note = { id: Date.now().toString(), fileName: file.name, fileType: file.type, teacherName: account.fullName, teacherEmail: account.email, subject: account.subject, createdAt: new Date().toISOString() };
-        await saveNote(note, file);
+        await saveNote(note, file, progress => {
+          button.textContent = `Uploading ${progress}%...`;
+        });
         form.reset();
         status.textContent = 'Notes published successfully for all students.';
         status.style.display = 'block';
         status.style.color = '#155e35';
         status.style.background = '#dcfce7';
-      } catch (error) { status.textContent = error.message; status.style.display = 'block'; }
+      } catch (error) {
+        status.textContent = error.code === 'storage/unauthorized' ? 'Firebase Storage permission denied. Check Storage Rules.' : `Upload failed: ${error.code || error.message}`;
+        status.style.display = 'block';
+        status.style.color = '#9a3412';
+        status.style.background = '#ffedd5';
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Publish notes';
+      }
     }, true);
   </script>
 </body>

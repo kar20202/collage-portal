@@ -1,6 +1,6 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { get, onValue, ref, runTransaction, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-import { getDownloadURL, ref as storageRef, uploadBytes } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+import { getDownloadURL, ref as storageRef, uploadBytesResumable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 import { auth, database, storage } from "./firebase-config.js";
 
 export async function registerAccount(role, account) {
@@ -51,9 +51,14 @@ export async function addAttendance(classId, student) {
   });
 }
 
-export async function saveNote(note, file) {
-  const filePath = `notes/${note.id}-${file.name}`;
-  const uploaded = await uploadBytes(storageRef(storage, filePath), file);
+export async function saveNote(note, file, onProgress = () => {}) {
+  const filePath = `notes/${note.id}-${encodeURIComponent(file.name)}`;
+  const uploaded = await new Promise((resolve, reject) => {
+    const task = uploadBytesResumable(storageRef(storage, filePath), file, { contentType: file.type || 'application/octet-stream' });
+    task.on('state_changed', snapshot => {
+      onProgress(Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100));
+    }, reject, () => resolve(task.snapshot));
+  });
   const fileData = await getDownloadURL(uploaded.ref);
   await set(ref(database, `notes/${note.id}`), { ...note, fileData, storagePath: filePath });
 }

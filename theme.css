@@ -98,6 +98,7 @@ main,
 .section-grid .section-card:nth-child(4) { background: linear-gradient(135deg, #d28a2e, #f6b73c) !important; }
 .section-grid .section-card:nth-child(5) { background: linear-gradient(135deg, #a64ca6, #d76dc8) !important; }
 .section-grid .section-card:nth-child(6) { background: linear-gradient(135deg, #3478c4, #5ca9e6) !important; }
+.section-grid .section-card:nth-child(7) { background: linear-gradient(135deg, #7b3f98, #b35ac8) !important; }
 
 .section-grid .section-card:hover,
 .section-grid .section-card:focus-visible {
