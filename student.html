@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Students | Teacher Portal</title>
+  <style>
+    :root { --navy: #14213d; --blue: #2563eb; --muted: #64748b; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; padding: 38px 24px; color: var(--navy); font-family: Arial, sans-serif; background: linear-gradient(135deg, #dcecff, #fff3d6); }
+    main { width: min(100%, 950px); margin: 0 auto; padding: 42px; background: #fff; border-radius: 14px; box-shadow: 0 20px 50px rgba(20, 33, 61, 0.14); }
+    h1 { font: 500 2.5rem Georgia, serif; }
+    .intro { margin: 10px 0 28px; color: var(--muted); line-height: 1.6; }
+    .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat { padding: 18px; background: #e8f1ff; border-radius: 10px; }
+    .stat strong { display: block; color: var(--blue); font-size: 1.9rem; }
+    .stat span { color: var(--muted); font-size: 0.88rem; }
+    .student-list { display: grid; gap: 14px; }
+    .student-card { display: grid; grid-template-columns: 1fr auto; gap: 18px; padding: 20px; border: 1px solid #d8e2f0; border-radius: 10px; }
+    .student-card h2 { margin-bottom: 7px; color: var(--navy); font: 500 1.3rem Georgia, serif; }
+    .profile { color: var(--muted); line-height: 1.6; }
+    .attendance { display: flex; align-items: center; gap: 10px; }
+    .attendance div { min-width: 76px; padding: 10px; border-radius: 8px; text-align: center; }
+    .attendance strong { display: block; font-size: 1.35rem; }
+    .joined { color: #155e35; background: #dcfce7; }
+    .missed { color: #9a3412; background: #ffedd5; }
+    .empty { padding: 20px; color: var(--muted); background: #f4f7fb; border-radius: 8px; }
+    .back { display: inline-block; margin-top: 26px; color: var(--blue); text-decoration: none; }
+    @media (max-width: 640px) { main { padding: 28px; } .summary { grid-template-columns: 1fr; } .student-card { grid-template-columns: 1fr; } .attendance { justify-content: flex-start; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Students</h1>
+    <p class="intro">View student profile names and attendance for the classes they joined by scanning a QR code.</p>
+    <section class="summary" aria-label="Student summary">
+      <div class="stat"><strong id="student-count">0</strong><span>Registered students</span></div>
+      <div class="stat"><strong id="class-count">0</strong><span>Your classes</span></div>
+      <div class="stat"><strong id="scan-count">0</strong><span>Total class joins</span></div>
+    </section>
+    <section id="student-list" class="student-list" aria-live="polite"></section>
+    <a class="back" href="teacher-dash.html">Back to dashboard</a>
+  </main>
+  <script>
+    const teacherAccount = JSON.parse(localStorage.getItem('teacherAccount') || 'null');
+    const storedAccounts = JSON.parse(localStorage.getItem('studentAccounts') || '[]');
+    const currentAccount = JSON.parse(localStorage.getItem('studentAccount') || 'null');
+    const students = storedAccounts.length ? storedAccounts : (currentAccount ? [currentAccount] : []);
+    const allClasses = JSON.parse(localStorage.getItem('classes') || '[]');
+    const classes = teacherAccount ? allClasses.filter(item => item.teacherName === teacherAccount.fullName && item.subject === teacherAccount.subject) : allClasses;
+    const totalJoins = classes.reduce((total, item) => total + Number(item.joinedCount || (item.scannedStudents || []).length || 0), 0);
+    document.getElementById('student-count').textContent = students.length;
+    document.getElementById('class-count').textContent = classes.length;
+    document.getElementById('scan-count').textContent = totalJoins;
+    const list = document.getElementById('student-list');
+    if (!students.length) {
+      list.innerHTML = '<p class="empty">No student accounts have been created yet.</p>';
+    } else {
+      students.forEach(student => {
+        const joinedClasses = classes.filter(item => (item.scannedStudents || []).some(scan => {
+          const scanEmail = typeof scan === 'string' ? '' : scan.email;
+          const scanName = typeof scan === 'string' ? scan : scan.name;
+          return (scanEmail && scanEmail === student.email) || (scanName && scanName === student.fullName);
+        }));
+        const missedClasses = Math.max(classes.length - joinedClasses.length, 0);
+        const card = document.createElement('article');
+        card.className = 'student-card';
+        card.innerHTML = `<div><h2>${student.fullName}</h2><p class="profile">${student.email}<br>Branch: ${student.branch} | Semester: ${student.semester}</p></div><div class="attendance"><div class="joined"><strong>${joinedClasses.length}</strong>joined</div><div class="missed"><strong>${missedClasses}</strong>missed</div></div>`;
+        list.appendChild(card);
+      });
+    }
+  </script>
+  <script type="module">
+    import { watchClasses } from './firebase-data.js';
+    watchClasses(remoteClasses => {
+      const next = JSON.stringify(Object.values(remoteClasses));
+      if (localStorage.getItem('classes') !== next) { localStorage.setItem('classes', next); window.location.reload(); }
+    });
+  </script>
+</body>
+</html>

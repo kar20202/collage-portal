@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Class</title>
+  <style>
+    :root { --navy: #14213d; --blue: #2563eb; --ink: #182230; --muted: #64748b; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; display: grid; place-items: center; padding: 24px; color: var(--ink); font-family: Arial, sans-serif; background: linear-gradient(135deg, #dcecff, #fff3d6); }
+    main { width: min(100%, 650px); padding: 42px; background: #fff; border-radius: 14px; box-shadow: 0 20px 50px rgba(20, 33, 61, 0.14); }
+    h1 { color: var(--navy); font: 500 2.5rem Georgia, serif; }
+    .intro { margin: 12px 0 28px; color: var(--muted); line-height: 1.6; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 18px; }
+    label { display: block; margin: 16px 0 7px; color: var(--navy); font-weight: bold; font-size: 0.9rem; }
+    input, select, button { width: 100%; padding: 13px; border-radius: 7px; font: 1rem Arial, sans-serif; }
+    input, select { border: 1px solid #d8e2f0; background: #fff; }
+    input[readonly] { color: var(--muted); background: #f4f7fb; }
+    input:focus, select:focus { border-color: var(--blue); outline: 2px solid rgba(37, 99, 235, 0.15); }
+    .full { grid-column: 1 / -1; }
+    button { margin-top: 24px; color: #fff; background: var(--blue); border: 0; cursor: pointer; font-weight: bold; }
+    button:hover { background: #1d4ed8; }
+    .back { display: inline-block; margin-top: 24px; color: var(--blue); text-decoration: none; }
+    .note { margin-top: 18px; color: var(--muted); font-size: 0.86rem; }
+    @media (max-width: 560px) { main { padding: 28px; } .form-grid { grid-template-columns: 1fr; } .full { grid-column: auto; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Create a Class</h1>
+    <p class="intro">Set a class name and timetable. Your teacher name and subject are taken automatically from your profile.</p>
+    <form id="class-form">
+      <div class="form-grid">
+        <div class="full">
+          <label for="class-name">Class name</label>
+          <input id="class-name" name="className" type="text" placeholder="For example: Data Structures - CSE 3" required>
+        </div>
+        <div>
+          <label for="teacher-name">Teacher</label>
+          <input id="teacher-name" name="teacherName" type="text" readonly>
+        </div>
+        <div>
+          <label for="subject">Subject</label>
+          <input id="subject" name="subject" type="text" readonly>
+        </div>
+        <div>
+          <label for="class-date">Class date</label>
+          <input id="class-date" name="date" type="date" required>
+        </div>
+        <div>
+          <label for="class-time">Class time</label>
+          <select id="class-time" name="time" required>
+            <option value="">Choose a time</option>
+            <option>10:00 AM - 11:00 AM</option>
+            <option>11:00 AM - 12:00 PM</option>
+            <option>12:00 PM - 1:00 PM</option>
+            <option disabled>1:00 PM - 2:00 PM - Lunch break</option>
+            <option>2:00 PM - 3:00 PM</option>
+            <option>3:00 PM - 4:00 PM</option>
+            <option>4:00 PM - 5:00 PM</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit">Save class and generate QR</button>
+    </form>
+    <p class="note">Students can scan the QR code to receive this class information.</p>
+    <a class="back" href="teacher-dash.html">Back to dashboard</a>
+  </main>
+  <script>
+    const teacherAccount = JSON.parse(localStorage.getItem('teacherAccount') || 'null');
+    if (!teacherAccount) window.location.href = 'teacher-login.html';
+    document.getElementById('teacher-name').value = teacherAccount?.fullName || '';
+    document.getElementById('subject').value = teacherAccount?.subject || '';
+    document.getElementById('class-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const formData = new FormData(event.currentTarget);
+      const newClass = {
+        id: Date.now().toString(),
+        className: formData.get('className'),
+        teacherName: teacherAccount.fullName,
+        subject: teacherAccount.subject,
+        branch: teacherAccount.branch,
+        date: formData.get('date'),
+        time: formData.get('time'),
+        joinedCount: 0,
+        scannedStudents: []
+      };
+      const classes = JSON.parse(localStorage.getItem('classes') || '[]');
+      classes.push(newClass);
+      localStorage.setItem('classes', JSON.stringify(classes));
+      localStorage.setItem('currentClass', JSON.stringify(newClass));
+      window.location.href = 'generate-qr.html';
+    });
+  </script>
+  <script type="module">
+    import { saveClass } from './firebase-data.js';
+    document.getElementById('class-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const account = JSON.parse(localStorage.getItem('teacherAccount') || 'null');
+      const data = new FormData(event.currentTarget);
+      const classData = { id: Date.now().toString(), className: data.get('className'), teacherName: account.fullName, subject: account.subject, branch: account.branch, date: data.get('date'), time: data.get('time'), joinedCount: 0, scannedStudents: {} };
+      try {
+        await saveClass(classData);
+        localStorage.setItem('currentClass', JSON.stringify(classData));
+        window.location.href = 'generate-qr.html';
+      } catch (error) { alert(`Class could not be saved: ${error.message}`); }
+    }, true);
+  </script>
+</body>
+</html>

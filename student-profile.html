@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Profile</title>
+  <style>
+    :root { --navy: #14213d; --blue: #2563eb; --muted: #64748b; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; display: grid; place-items: center; padding: 24px; color: var(--navy); font-family: Arial, sans-serif; background: linear-gradient(135deg, #dcecff, #fff3d6); }
+    main { width: min(100%, 520px); padding: 42px; background: #fff; border-radius: 14px; box-shadow: 0 20px 50px rgba(20, 33, 61, 0.14); }
+    h1 { margin-bottom: 26px; font: 500 2.5rem Georgia, serif; }
+    dl { display: grid; grid-template-columns: 120px 1fr; gap: 15px 18px; }
+    dt { color: var(--muted); font-weight: bold; }
+    dd { margin: 0; overflow-wrap: anywhere; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+    .back, button { padding: 12px 16px; border: 0; border-radius: 7px; font: 1rem Arial, sans-serif; text-decoration: none; cursor: pointer; }
+    .back { color: var(--blue); background: #e8f1ff; }
+    button { color: #fff; background: var(--blue); }
+    @media (max-width: 460px) { main { padding: 28px; } dl { grid-template-columns: 1fr; gap: 5px; } dd { margin-bottom: 10px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Student Profile</h1>
+    <dl>
+      <dt>Full name</dt><dd id="name">-</dd>
+      <dt>Email</dt><dd id="email">-</dd>
+      <dt>Branch</dt><dd id="branch">-</dd>
+      <dt>Semester</dt><dd id="semester">-</dd>
+    </dl>
+    <div class="actions">
+      <a class="back" href="student-dash.html">Back to dashboard</a>
+      <button id="logout" type="button">Log out</button>
+    </div>
+  </main>
+  <script>
+    const student = JSON.parse(localStorage.getItem('studentAccount') || 'null');
+    if (!student) window.location.href = 'student-login.html';
+    document.getElementById('name').textContent = student?.fullName || '-';
+    document.getElementById('email').textContent = student?.email || '-';
+    document.getElementById('branch').textContent = student?.branch || '-';
+    document.getElementById('semester').textContent = student?.semester ? `Semester ${student.semester}` : '-';
+    document.getElementById('logout').addEventListener('click', () => {
+      localStorage.removeItem('studentAccount');
+      window.location.href = 'student-login.html';
+    });
+  </script>
+</body>
+</html>

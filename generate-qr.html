@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generate QR | School Portal</title>
+  <style>
+    :root { --navy: #14213d; --blue: #2563eb; --muted: #64748b; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; display: grid; place-items: center; padding: 24px; color: var(--navy); font-family: Arial, sans-serif; background: linear-gradient(135deg, #dcecff, #fff3d6); }
+    main { width: min(100%, 620px); padding: 42px; text-align: center; background: #fff; border-radius: 14px; box-shadow: 0 20px 50px rgba(20, 33, 61, 0.14); }
+    h1 { font: 500 2.5rem Georgia, serif; }
+    .intro { margin: 12px 0 24px; color: var(--muted); line-height: 1.6; }
+    .class-details { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; text-align: left; }
+    .detail { padding: 14px; background: #f4f7fb; border-radius: 8px; }
+    .detail small { display: block; margin-bottom: 5px; color: var(--muted); }
+    .scan-summary { margin: 18px 0 24px; padding: 18px; color: var(--navy); background: #e8f1ff; border-radius: 10px; text-align: left; }
+    .scan-summary h2 { margin-bottom: 8px; font: 500 1.25rem Georgia, serif; }
+    .scan-count { margin-bottom: 12px; color: var(--blue); font-weight: bold; }
+    .student-list { margin: 0; padding-left: 20px; color: var(--muted); line-height: 1.7; }
+    .no-students { color: var(--muted); }
+    .qr-expiry { margin-bottom: 12px; color: #9a3412; font-weight: bold; }
+    #qrcode { display: grid; place-items: center; min-height: 310px; margin: 18px auto 24px; }
+    #qrcode canvas, #qrcode img { width: 300px; height: 300px; max-width: 100%; padding: 12px; border: 1px solid #d8e2f0; }
+    .back { display: inline-block; margin-top: 8px; color: var(--blue); text-decoration: none; }
+    .empty { color: var(--muted); }
+    @media (max-width: 520px) { main { padding: 28px; } .class-details { grid-template-columns: 1fr; } }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <main>
+    <h1>Class QR Code</h1>
+    <p class="intro">Students can scan this QR code to receive the class details.</p>
+    <section id="class-details" class="class-details"></section>
+    <section class="scan-summary" aria-live="polite">
+      <h2>Student scans</h2>
+      <p id="scan-count" class="scan-count">0 students scanned this QR code</p>
+      <div id="student-list" class="no-students">No students have scanned this QR code yet.</div>
+    </section>
+    <p id="qr-expiry" class="qr-expiry"></p>
+    <div id="qrcode"></div>
+    <a class="back" href="upload-classes.html">Create another class</a>
+    <a class="back" href="teacher-dash.html">Back to dashboard</a>
+  </main>
+  <script>
+    const classData = JSON.parse(localStorage.getItem('currentClass') || 'null');
+    const details = document.getElementById('class-details');
+    const qrContainer = document.getElementById('qrcode');
+    const scanCount = document.getElementById('scan-count');
+    const studentList = document.getElementById('student-list');
+    const expiryLabel = document.getElementById('qr-expiry');
+    const qrLifetime = 5 * 60 * 1000;
+    let qrExpiresAt;
+    function createToken() {
+      if (window.crypto?.randomUUID) return crypto.randomUUID();
+      return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
+    function renderQr() {
+      qrExpiresAt = Date.now() + qrLifetime;
+      qrContainer.innerHTML = '';
+      const qrData = { type: 'school-class', id: classData.id, className: classData.className, teacherName: classData.teacherName, subject: classData.subject, branch: classData.branch, date: classData.date, time: classData.time, qrToken: createToken(), expiresAt: qrExpiresAt };
+      new QRCode(qrContainer, { text: JSON.stringify(qrData), width: 300, height: 300, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.L });
+    }
+    function updateExpiry() {
+      const seconds = Math.max(0, Math.ceil((qrExpiresAt - Date.now()) / 1000));
+      const minutes = Math.floor(seconds / 60);
+      expiryLabel.textContent = `QR changes in ${minutes}:${String(seconds % 60).padStart(2, '0')}`;
+    }
+    if (!classData) {
+      details.innerHTML = '<p class="empty">No class has been created yet.</p>';
+      qrContainer.innerHTML = '<p class="empty">Create a class first.</p>';
+    } else {
+      details.innerHTML = `<div class="detail"><small>Class</small><strong>${classData.className}</strong></div><div class="detail"><small>Teacher</small><strong>${classData.teacherName}</strong></div><div class="detail"><small>Subject</small><strong>${classData.subject}</strong></div><div class="detail"><small>Schedule</small><strong>${classData.date}<br>${classData.time}</strong></div>`;
+      const scannedStudents = Array.isArray(classData.scannedStudents) ? classData.scannedStudents : [];
+      scanCount.textContent = `${scannedStudents.length} student${scannedStudents.length === 1 ? '' : 's'} scanned this QR code`;
+      if (scannedStudents.length) {
+        studentList.className = 'student-list';
+        studentList.innerHTML = scannedStudents.map(student => `<li>${student.name || student}</li>`).join('');
+      }
+      renderQr();
+      setInterval(() => { renderQr(); }, qrLifetime);
+      setInterval(updateExpiry, 1000);
+      updateExpiry();
+    }
+  </script>
+</body>
+</html>

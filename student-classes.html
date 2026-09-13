@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Classes | Student Portal</title>
+  <style>
+    :root { --navy: #14213d; --blue: #2563eb; --muted: #64748b; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; padding: 38px 24px; color: var(--navy); font-family: Arial, sans-serif; background: linear-gradient(135deg, #dcecff, #fff3d6); }
+    main { width: min(100%, 850px); margin: 0 auto; padding: 42px; background: #fff; border-radius: 14px; box-shadow: 0 20px 50px rgba(20, 33, 61, 0.14); }
+    h1 { font: 500 2.5rem Georgia, serif; }
+    .intro { margin: 10px 0 26px; color: var(--muted); line-height: 1.6; }
+    label { display: block; margin-bottom: 7px; color: var(--navy); font-weight: bold; font-size: 0.9rem; }
+    select { width: 100%; padding: 13px; border: 1px solid #d8e2f0; border-radius: 7px; background: #fff; font: 1rem Arial, sans-serif; }
+    select:focus { border-color: var(--blue); outline: 2px solid rgba(37, 99, 235, 0.15); }
+    .summary { display: flex; flex-wrap: wrap; gap: 12px; margin: 28px 0 18px; }
+    .stat { padding: 13px 18px; background: #e8f1ff; border-radius: 8px; }
+    .stat strong { color: var(--blue); font-size: 1.35rem; }
+    .class-list { display: grid; gap: 14px; }
+    .class-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 20px; border: 1px solid #d8e2f0; border-radius: 10px; }
+    .class-card h2 { margin-bottom: 7px; font: 500 1.25rem Georgia, serif; }
+    .class-card p { color: var(--muted); line-height: 1.6; }
+    .status { min-width: 98px; padding: 11px; border-radius: 8px; text-align: center; font-weight: bold; }
+    .attended { color: #155e35; background: #dcfce7; }
+    .missed { color: #9a3412; background: #ffedd5; }
+    .empty { padding: 20px; color: var(--muted); background: #f4f7fb; border-radius: 8px; }
+    .back { display: inline-block; margin-top: 26px; color: var(--blue); text-decoration: none; }
+    @media (max-width: 560px) { main { padding: 28px; } .class-card { align-items: flex-start; flex-direction: column; } .status { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>My Classes</h1>
+    <p class="intro">Choose a subject to view the classes uploaded by teachers and your attendance status.</p>
+    <label for="subject-filter">Select subject</label>
+    <select id="subject-filter">
+      <option value="all">All subjects</option>
+      <option>Math</option>
+      <option>Physics</option>
+      <option>Chemistry</option>
+      <option>FEEE</option>
+      <option>Engineering Graphics</option>
+    </select>
+    <section class="summary" aria-label="Attendance summary">
+      <div class="stat"><strong id="class-count">0</strong> classes</div>
+      <div class="stat"><strong id="attended-count">0</strong> attended</div>
+      <div class="stat"><strong id="missed-count">0</strong> missed</div>
+    </section>
+    <section id="class-list" class="class-list" aria-live="polite"></section>
+    <a class="back" href="student-dash.html">Back to student dashboard</a>
+  </main>
+  <script>
+    const student = JSON.parse(localStorage.getItem('studentAccount') || 'null');
+    const localClasses = JSON.parse(localStorage.getItem('classes') || '[]');
+    const joinedClasses = JSON.parse(localStorage.getItem('studentJoinedClasses') || '[]');
+    const classes = [...localClasses];
+    joinedClasses.forEach(joinedClass => {
+      if (!classes.some(item => item.id === joinedClass.id)) classes.push(joinedClass);
+    });
+    const filter = document.getElementById('subject-filter');
+    const classList = document.getElementById('class-list');
+    function subjectKey(subject) {
+      const value = String(subject || '').trim().toLowerCase();
+      return value === 'mathematics' ? 'math' : value;
+    }
+    function hasAttended(classItem) {
+      return (classItem.scannedStudents || []).some(scan => {
+        const email = typeof scan === 'string' ? '' : scan.email;
+        const name = typeof scan === 'string' ? scan : scan.name;
+        return (email && student?.email && email === student.email) || (name && student?.fullName && name === student.fullName);
+      });
+    }
+    function renderClasses() {
+      const selectedSubject = filter.value;
+      const visibleClasses = classes.filter(item => selectedSubject === 'all' || subjectKey(item.subject) === subjectKey(selectedSubject));
+      const attendedCount = visibleClasses.filter(hasAttended).length;
+      document.getElementById('class-count').textContent = visibleClasses.length;
+      document.getElementById('attended-count').textContent = attendedCount;
+      document.getElementById('missed-count').textContent = visibleClasses.length - attendedCount;
+      classList.innerHTML = '';
+      if (!visibleClasses.length) {
+        classList.innerHTML = '<p class="empty">No teacher classes are available for this subject yet.</p>';
+        return;
+      }
+      visibleClasses.slice().reverse().forEach(item => {
+        const card = document.createElement('article');
+        card.className = 'class-card';
+        const details = document.createElement('div');
+        const title = document.createElement('h2');
+        title.textContent = item.className;
+        const info = document.createElement('p');
+        info.textContent = `${item.subject} | Teacher: ${item.teacherName}\n${item.date} | ${item.time}`;
+        info.style.whiteSpace = 'pre-line';
+        details.append(title, info);
+        const status = document.createElement('div');
+        const attended = hasAttended(item);
+        status.className = `status ${attended ? 'attended' : 'missed'}`;
+        status.textContent = attended ? 'Attended' : 'Missed';
+        card.append(details, status);
+        classList.appendChild(card);
+      });
+    }
+    filter.addEventListener('change', renderClasses);
+    renderClasses();
+  </script>
+  <script type="module">
+    import { watchClasses } from './firebase-data.js';
+    watchClasses(remoteClasses => {
+      const classes = Object.values(remoteClasses);
+      const current = localStorage.getItem('classes');
+      const next = JSON.stringify(classes);
+      if (current !== next) { localStorage.setItem('classes', next); window.location.reload(); }
+    });
+  </script>
+</body>
+</html>

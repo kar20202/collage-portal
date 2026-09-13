@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Notes | Teacher Portal</title>
+  <style>
+    :root { --navy: #14213d; --blue: #2563eb; --ink: #182230; --muted: #64748b; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; padding: 38px 24px; color: var(--ink); font-family: Arial, sans-serif; background: linear-gradient(135deg, #dcecff, #fff3d6); }
+    main { width: min(100%, 700px); margin: 0 auto; padding: 42px; background: #fff; border-radius: 14px; box-shadow: 0 20px 50px rgba(20, 33, 61, 0.14); }
+    h1 { color: var(--navy); font: 500 2.5rem Georgia, serif; }
+    .intro { margin: 10px 0 28px; color: var(--muted); line-height: 1.6; }
+    .profile { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+    .profile-item { padding: 14px; background: #e8f1ff; border-radius: 8px; }
+    .profile-item small { display: block; margin-bottom: 5px; color: var(--muted); }
+    label { display: block; margin: 17px 0 7px; color: var(--navy); font-weight: bold; font-size: 0.9rem; }
+    input, button { width: 100%; padding: 13px; border-radius: 7px; font: 1rem Arial, sans-serif; }
+    input { border: 1px solid #d8e2f0; }
+    input:focus { border-color: var(--blue); outline: 2px solid rgba(37, 99, 235, 0.15); }
+    button { margin-top: 24px; color: #fff; background: var(--blue); border: 0; cursor: pointer; font-weight: bold; }
+    button:hover { background: #1d4ed8; }
+    .hint, .status { margin-top: 8px; color: var(--muted); font-size: 0.86rem; }
+    .status { display: none; padding: 12px; border-radius: 8px; }
+    .back { display: inline-block; margin-top: 26px; color: var(--blue); text-decoration: none; }
+    @media (max-width: 520px) { main { padding: 28px; } .profile { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Upload Notes</h1>
+    <p class="intro">Upload a note file or image. Your profile name and subject are added automatically.</p>
+    <section class="profile" aria-label="Teacher details">
+      <div class="profile-item"><small>Teacher</small><strong id="teacher-name">-</strong></div>
+      <div class="profile-item"><small>Subject</small><strong id="subject">-</strong></div>
+    </section>
+    <form id="notes-form">
+      <label for="note-file">Choose a note file or image</label>
+      <input id="note-file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,image/*" required>
+      <p class="hint">Maximum file size: 100 MB.</p>
+      <button type="submit">Publish notes</button>
+    </form>
+    <p id="status" class="status" role="status"></p>
+    <a class="back" href="teacher-dash.html">Back to dashboard</a>
+  </main>
+  <script>
+    const teacherAccount = JSON.parse(localStorage.getItem('teacherAccount') || 'null');
+    if (!teacherAccount) window.location.href = 'teacher-login.html';
+    document.getElementById('teacher-name').textContent = teacherAccount?.fullName || '-';
+    document.getElementById('subject').textContent = teacherAccount?.subject || '-';
+    const databaseRequest = indexedDB.open('schoolPortal', 1);
+    databaseRequest.onupgradeneeded = event => event.target.result.createObjectStore('notes', { keyPath: 'id' });
+    const databaseReady = new Promise((resolve, reject) => {
+      databaseRequest.onsuccess = event => resolve(event.target.result);
+      databaseRequest.onerror = () => reject(new Error('Browser storage could not be opened.'));
+    });
+    function saveNote(note) {
+      return databaseReady.then(database => new Promise((resolve, reject) => {
+        const request = database.transaction('notes', 'readwrite').objectStore('notes').put(note);
+        request.onsuccess = resolve;
+        request.onerror = () => reject(new Error('The note could not be saved. Try a smaller file.'));
+      }));
+    }
+    document.getElementById('notes-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const file = document.getElementById('note-file').files[0];
+      const status = document.getElementById('status');
+      if (!file) return;
+      try {
+        if (file.size > 100 * 1024 * 1024) throw new Error('The file must be 100 MB or smaller.');
+        await saveNote({ id: Date.now().toString(), fileName: file.name, fileType: file.type, file, teacherName: teacherAccount.fullName, teacherEmail: teacherAccount.email, subject: teacherAccount.subject, createdAt: new Date().toISOString() });
+        form.reset();
+        status.textContent = 'Notes published successfully. Students can view them from View Notes.';
+        status.style.display = 'block';
+        status.style.color = '#155e35';
+        status.style.background = '#dcfce7';
+      } catch (error) {
+        status.textContent = error.message;
+        status.style.display = 'block';
+        status.style.color = '#9a3412';
+        status.style.background = '#ffedd5';
+      }
+    });
+  </script>
+  <script type="module">
+    import { saveNote } from './firebase-data.js';
+    document.getElementById('notes-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const form = event.currentTarget;
+      const file = document.getElementById('note-file').files[0];
+      const status = document.getElementById('status');
+      const account = JSON.parse(localStorage.getItem('teacherAccount') || 'null');
+      if (!file) return;
+      try {
+        if (file.size > 100 * 1024 * 1024) throw new Error('The file must be 100 MB or smaller.');
+        const note = { id: Date.now().toString(), fileName: file.name, fileType: file.type, teacherName: account.fullName, teacherEmail: account.email, subject: account.subject, createdAt: new Date().toISOString() };
+        await saveNote(note, file);
+        form.reset();
+        status.textContent = 'Notes published successfully for all students.';
+        status.style.display = 'block';
+        status.style.color = '#155e35';
+        status.style.background = '#dcfce7';
+      } catch (error) { status.textContent = error.message; status.style.display = 'block'; }
+    }, true);
+  </script>
+</body>
+</html>

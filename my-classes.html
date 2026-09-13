@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Classes</title>
+  <style>
+    :root { --navy: #14213d; --blue: #2563eb; --muted: #64748b; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; padding: 38px 24px; color: var(--navy); font-family: Arial, sans-serif; background: linear-gradient(135deg, #dcecff, #fff3d6); }
+    main { width: min(100%, 850px); margin: 0 auto; padding: 42px; background: #fff; border-radius: 14px; box-shadow: 0 20px 50px rgba(20, 33, 61, 0.14); }
+    h1 { font: 500 2.5rem Georgia, serif; }
+    .intro { margin: 10px 0 26px; color: var(--muted); }
+    .summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat { padding: 20px; background: #e8f1ff; border-radius: 10px; }
+    .stat strong { display: block; color: var(--blue); font-size: 2rem; }
+    .stat span { color: var(--muted); font-size: 0.9rem; }
+    .class-list { display: grid; gap: 14px; }
+    .class-card { display: grid; grid-template-columns: 1fr auto; gap: 14px; padding: 20px; border: 1px solid #d8e2f0; border-radius: 10px; }
+    .class-card h2 { margin-bottom: 7px; color: var(--navy); font: 500 1.25rem Georgia, serif; }
+    .class-card p { color: var(--muted); line-height: 1.55; }
+    .joined { align-self: center; min-width: 108px; padding: 12px; color: #155e35; background: #dcfce7; border-radius: 8px; text-align: center; }
+    .joined strong { display: block; font-size: 1.45rem; }
+    .empty { padding: 20px; color: var(--muted); background: #f4f7fb; border-radius: 8px; }
+    .back { display: inline-block; margin-top: 26px; color: var(--blue); text-decoration: none; }
+    @media (max-width: 560px) { main { padding: 28px; } .summary { grid-template-columns: 1fr; } .class-card { grid-template-columns: 1fr; } .joined { justify-self: start; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>My Classes</h1>
+    <p class="intro">View every class you created and how many students joined by scanning its QR code.</p>
+    <section class="summary" aria-label="Class summary">
+      <div class="stat"><strong id="class-count">0</strong><span>Classes generated</span></div>
+      <div class="stat"><strong id="student-count">0</strong><span>Students joined</span></div>
+    </section>
+    <section id="class-list" class="class-list" aria-live="polite"></section>
+    <a class="back" href="teacher-dash.html">Back to dashboard</a>
+  </main>
+  <script>
+    const account = JSON.parse(localStorage.getItem('teacherAccount') || 'null');
+    const allClasses = JSON.parse(localStorage.getItem('classes') || '[]');
+    const teacherClasses = account ? allClasses.filter(item => item.teacherName === account.fullName && item.subject === account.subject) : [];
+    const joinedTotal = teacherClasses.reduce((total, item) => total + Number(item.joinedCount || 0), 0);
+    document.getElementById('class-count').textContent = teacherClasses.length;
+    document.getElementById('student-count').textContent = joinedTotal;
+    const classList = document.getElementById('class-list');
+    if (!teacherClasses.length) {
+      classList.innerHTML = '<p class="empty">No classes have been generated yet.</p>';
+    } else {
+      teacherClasses.slice().reverse().forEach(item => {
+        const card = document.createElement('article');
+        card.className = 'class-card';
+        card.innerHTML = `<div><h2>${item.className}</h2><p>${item.subject} | ${item.branch || 'Branch not set'}<br>${item.date} | ${item.time}<br>Teacher: ${item.teacherName}</p></div><div class="joined"><strong>${Number(item.joinedCount || 0)}</strong>joined</div>`;
+        classList.appendChild(card);
+      });
+    }
+  </script>
+  <script type="module">
+    import { watchClasses } from './firebase-data.js';
+    watchClasses(remoteClasses => {
+      const next = JSON.stringify(Object.values(remoteClasses));
+      if (localStorage.getItem('classes') !== next) { localStorage.setItem('classes', next); window.location.reload(); }
+    });
+  </script>
+</body>
+</html>

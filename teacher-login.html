@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Login | School Portal</title>
+  <style>
+    :root { --navy: #14213d; --blue: #2563eb; --ink: #182230; --muted: #64748b; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; display: grid; place-items: center; padding: 24px; color: var(--ink); font-family: Georgia, "Times New Roman", serif; background: linear-gradient(135deg, #dcecff, #fff3d6); }
+    .login-box { width: min(100%, 430px); padding: 42px; background: #fff; border-radius: 16px; box-shadow: 0 24px 60px rgba(20, 33, 61, 0.16); }
+    h1 { margin-bottom: 10px; color: var(--navy); font-size: 2.4rem; font-weight: 500; }
+    .subtitle { margin-bottom: 28px; color: var(--muted); font-family: Arial, sans-serif; line-height: 1.5; }
+    label { display: block; margin: 16px 0 7px; color: var(--navy); font: bold 0.9rem Arial, sans-serif; }
+    input, select { width: 100%; padding: 13px 14px; border: 1px solid #d8e2f0; border-radius: 8px; font: 1rem Arial, sans-serif; }
+    input:focus, select:focus { border-color: var(--blue); outline: 2px solid rgba(37, 99, 235, 0.15); }
+    button { width: 100%; margin-top: 24px; padding: 14px; color: #fff; background: var(--blue); border: 0; border-radius: 8px; cursor: pointer; font: bold 1rem Arial, sans-serif; }
+    button:hover { background: #1d4ed8; }
+    .switch { margin: 22px 0 0; color: var(--muted); font: 0.9rem Arial, sans-serif; text-align: center; }
+    .switch button { width: auto; margin: 0; padding: 0; color: var(--blue); background: none; font: inherit; }
+    .generated-password { display: none; margin-top: 18px; padding: 12px; color: #155e35; background: #dcfce7; border-radius: 8px; font: 0.9rem Arial, sans-serif; line-height: 1.5; }
+    .generated-password strong { display: block; margin-top: 4px; font-size: 1rem; letter-spacing: 0.04em; }
+    .back { display: block; margin-top: 22px; color: var(--blue); font: 0.9rem Arial, sans-serif; text-align: center; text-decoration: none; }
+    [hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <main class="login-box">
+    <section id="login-section">
+      <h1>Teacher Login</h1>
+      <p class="subtitle">Enter your details to access the teacher portal.</p>
+      <form id="login-form">
+        <label for="login-email">Gmail address</label>
+        <input id="login-email" name="email" type="email" autocomplete="email" required>
+        <label for="login-password">Password</label>
+        <input id="login-password" name="password" type="password" required>
+        <button type="submit">Log in</button>
+      </form>
+      <p class="switch">New teacher? <button id="show-register" type="button">Create an account</button></p>
+    </section>
+    <section id="register-section" hidden>
+      <h1>Create Account</h1>
+      <p class="subtitle">Create your teacher account to get started.</p>
+      <form id="register-form">
+        <label for="full-name">Full name</label>
+        <input id="full-name" name="full-name" type="text" autocomplete="name" required>
+        <label for="teacher-branch">Branch</label>
+        <select id="teacher-branch" name="branch" required><option value="">Choose a branch</option><option value="CSE">CSE</option><option value="EC">EC</option></select>
+        <label for="subject">Subject</label>
+        <select id="subject" name="subject" required><option value="">Choose a subject</option><option value="Math">Math</option><option value="Physics">Physics</option><option value="Chemistry">Chemistry</option><option value="FEEE">FEEE</option><option value="Engineering Graphics">Engineering Graphics</option></select>
+        <label for="teacher-email">Real Gmail address</label>
+        <input id="teacher-email" name="email" type="email" autocomplete="email" placeholder="you@gmail.com" pattern="[a-zA-Z0-9._%+-]+@gmail\.com$" required>
+        <button type="submit">Create account</button>
+      </form>
+      <p id="generated-password" class="generated-password"></p>
+      <p class="switch">Already registered? <button id="show-login" type="button">Log in</button></p>
+    </section>
+    <a class="back" href="index.html">&larr; Back to portal</a>
+  </main>
+  <script>
+    const loginSection = document.getElementById('login-section');
+    const registerSection = document.getElementById('register-section');
+    const generatedPassword = document.getElementById('generated-password');
+    function createPassword() {
+      const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+      return Array.from({ length: 12 }, () => characters[Math.floor(Math.random() * characters.length)]).join('');
+    }
+    document.getElementById('show-register').addEventListener('click', () => { loginSection.hidden = true; registerSection.hidden = false; });
+    document.getElementById('show-login').addEventListener('click', () => { registerSection.hidden = true; loginSection.hidden = false; });
+    document.getElementById('register-form').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const formData = new FormData(event.currentTarget);
+      const password = createPassword();
+      localStorage.setItem('teacherAccount', JSON.stringify({ fullName: formData.get('full-name'), branch: formData.get('branch'), subject: formData.get('subject'), email: formData.get('email'), password }));
+      generatedPassword.innerHTML = 'Your generated password is:<strong>' + password + '</strong>Save it before continuing.';
+      generatedPassword.style.display = 'block';
+      setTimeout(() => { window.location.href = 'teacher-dash.html'; }, 1200);
+    });
+    document.getElementById('login-form').addEventListener('submit', (event) => { event.preventDefault(); window.location.href = 'teacher-dash.html'; });
+  </script>
+  <script type="module">
+    import { registerAccount, loginAccount } from './firebase-data.js';
+    const teacherLoginForm = document.getElementById('login-form');
+    const teacherRegisterForm = document.getElementById('register-form');
+    const teacherStatus = document.getElementById('generated-password');
+    teacherRegisterForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const data = new FormData(teacherRegisterForm);
+      const password = createPassword();
+      const account = { fullName: data.get('full-name'), branch: data.get('branch'), subject: data.get('subject'), email: data.get('email'), password };
+      try {
+        await registerAccount('teacher', account);
+        localStorage.setItem('teacherAccount', JSON.stringify(account));
+        teacherStatus.innerHTML = 'Account created. Your password is:<strong>' + password + '</strong>';
+        teacherStatus.style.display = 'block';
+        setTimeout(() => { window.location.href = 'teacher-dash.html'; }, 1200);
+      } catch (error) { teacherStatus.textContent = error.message; teacherStatus.style.display = 'block'; }
+    }, true);
+    teacherLoginForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const data = new FormData(teacherLoginForm);
+      try { const result = await loginAccount(data.get('email'), data.get('password')); localStorage.setItem('teacherAccount', JSON.stringify(result.profile)); window.location.href = 'teacher-dash.html'; }
+      catch (error) { teacherStatus.textContent = error.message; teacherStatus.style.display = 'block'; }
+    }, true);
+  </script>
+</body>
+</html>
