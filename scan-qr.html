@@ -87,9 +87,9 @@
           classes[classIndex].scannedStudents = scannedStudents;
           classes[classIndex].joinedCount = scannedStudents.length;
           localStorage.setItem('classes', JSON.stringify(classes));
-          window.firebaseAddAttendance?.(classData.id, { name: student.fullName, email: student.email, scannedAt: new Date().toISOString() });
         }
       }
+      window.firebaseAddAttendance?.(classData.id, { name: student.fullName, email: student.email, scannedAt: new Date().toISOString() });
       return classData;
     }
     function processCodeData(data) {

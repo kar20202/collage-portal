@@ -57,7 +57,7 @@
       list.innerHTML = '<p class="empty">No student accounts have been created yet.</p>';
     } else {
       students.forEach(student => {
-        const joinedClasses = classes.filter(item => (item.scannedStudents || []).some(scan => {
+        const joinedClasses = classes.filter(item => Object.values(item.scannedStudents || {}).some(scan => {
           const scanEmail = typeof scan === 'string' ? '' : scan.email;
           const scanName = typeof scan === 'string' ? scan : scan.name;
           return (scanEmail && scanEmail === student.email) || (scanName && scanName === student.fullName);
@@ -71,10 +71,17 @@
     }
   </script>
   <script type="module">
-    import { watchClasses } from './firebase-data.js';
+    import { watchClasses, watchProfiles } from './firebase-data.js';
     watchClasses(remoteClasses => {
       const next = JSON.stringify(Object.values(remoteClasses));
       if (localStorage.getItem('classes') !== next) { localStorage.setItem('classes', next); window.location.reload(); }
+    });
+    watchProfiles(remoteProfiles => {
+      const remoteStudents = Object.values(remoteProfiles).filter(profile => profile.role === 'student');
+      if (remoteStudents.length) {
+        localStorage.setItem('studentAccounts', JSON.stringify(remoteStudents));
+        window.location.reload();
+      }
     });
   </script>
 </body>

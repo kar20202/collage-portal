@@ -59,7 +59,7 @@
     function attended(classItem) {
       const student = JSON.parse(localStorage.getItem('studentAccount') || 'null');
       if (joinedClasses.some(joinedClass => joinedClass.id === classItem.id)) return true;
-      return (classItem.scannedStudents || []).some(scan => scan.email === student?.email || scan.name === student?.fullName);
+      return Object.values(classItem.scannedStudents || {}).some(scan => scan.email === student?.email || scan.name === student?.fullName);
     }
     function renderAttendance() {
       const selectedSubject = filter.value;

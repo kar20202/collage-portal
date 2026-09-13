@@ -25,6 +25,10 @@ export function watchClasses(callback) {
   return onValue(ref(database, 'classes'), snapshot => callback(snapshot.val() || {}));
 }
 
+export function watchProfiles(callback) {
+  return onValue(ref(database, 'profiles'), snapshot => callback(snapshot.val() || {}));
+}
+
 export async function addAttendance(classId, student) {
   const key = btoa(encodeURIComponent(student.email || student.name)).replace(/[^a-zA-Z0-9]/g, '');
   await runTransaction(ref(database, `classes/${classId}`), current => {
@@ -44,4 +48,12 @@ export async function saveNote(note, file) {
 
 export function watchNotes(callback) {
   return onValue(ref(database, 'notes'), snapshot => callback(snapshot.val() || {}));
+}
+
+export async function saveNotice(notice) {
+  await set(ref(database, `notices/${notice.id}`), notice);
+}
+
+export function watchNotices(callback) {
+  return onValue(ref(database, 'notices'), snapshot => callback(snapshot.val() || {}));
 }

@@ -65,7 +65,7 @@
       return value === 'mathematics' ? 'math' : value;
     }
     function hasAttended(classItem) {
-      return (classItem.scannedStudents || []).some(scan => {
+      return Object.values(classItem.scannedStudents || {}).some(scan => {
         const email = typeof scan === 'string' ? '' : scan.email;
         const name = typeof scan === 'string' ? scan : scan.name;
         return (email && student?.email && email === student.email) || (name && student?.fullName && name === student.fullName);

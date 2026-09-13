@@ -126,5 +126,27 @@
     });
     renderNotices();
   </script>
+  <script type="module">
+    import { saveNotice } from './firebase-data.js';
+    document.getElementById('notice-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const form = event.currentTarget;
+      const account = JSON.parse(localStorage.getItem('teacherAccount') || 'null');
+      const file = document.getElementById('notice-image').files[0];
+      const title = document.getElementById('notice-title').value.trim();
+      const content = document.getElementById('notice-content').value.trim();
+      const status = document.getElementById('status');
+      try {
+        let image = '';
+        if (file) image = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
+        if (!content && !image) throw new Error('Add notice text or choose an image before publishing.');
+        await saveNotice({ id: Date.now().toString(), title, content, image, teacherName: account.fullName, teacherEmail: account.email, createdAt: new Date().toISOString() });
+        form.reset();
+        status.textContent = 'Notice published for all students.';
+        status.style.display = 'block';
+      } catch (error) { status.textContent = error.message; status.style.display = 'block'; }
+    }, true);
+  </script>
 </body>
 </html>
